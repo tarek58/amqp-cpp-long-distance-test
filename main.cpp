@@ -13,6 +13,7 @@
 #include <ev.h>
 #include <amqpcpp.h>
 #include <amqpcpp/libev.h>
+#include <amqpcpp/reliable.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
 #include <chrono>
@@ -108,6 +109,8 @@ private:
      */
     std::string _queue;
 
+    AMQP::Reliable<>* reliable;
+
 
     /**
      *  Callback method that is called by libev when the timer expires
@@ -121,17 +124,38 @@ private:
         // retrieve the this pointer
         MyTimer *self = static_cast<MyTimer*>(timer->data);
 
+
         // publish a message
         auto start_time = std::chrono::high_resolution_clock::now();
 
-        int MESSAGE_COUNT = 100;
+        int MESSAGE_COUNT = 1000;
         for (int i = 0; i < MESSAGE_COUNT; ++i) {
-            self->_channel->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"  + std::to_string(i));
+            // self->_channel->publish
+            self->reliable->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"  + std::to_string(i))
+                .onAck([i, MESSAGE_COUNT, start_time, loop]() {
+                    std::cout << "Got ack on " << i << std::endl;
+
+                    if (i == MESSAGE_COUNT - 1) {
+                        auto e_time =  std::chrono::high_resolution_clock::now();
+                        std::cout << "Got ACK on all publishes in "
+                            << std::chrono::duration_cast<std::chrono::milliseconds>(e_time - start_time).count()
+                            << " ms"
+                            << std::endl;       
+
+                        ev_break(loop, EVBREAK_ONE);
+                    }
+                })
+                .onLost([i]() {
+                    std::cout << "got LOST on " << i << std::endl;
+                })
+                .onError([i](const char *message) {
+                    std::cout << "Got ERROR on " << i << " : message = " << message << std::endl;
+                });
             std::cout << "Sent publish signal for message " << i << std::endl;
         }
 
         auto end_time =  std::chrono::high_resolution_clock::now();
-        std::cout << "presumably published " << MESSAGE_COUNT << " in " 
+        std::cout << "presumably sent publish signal for " << MESSAGE_COUNT << " in " 
             << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() 
             << " ms" << std::endl;
     }
@@ -146,6 +170,8 @@ public:
     MyTimer(struct ev_loop *loop, AMQP::TcpChannel *channel, std::string queue) : 
         _channel(channel), _queue(std::move(queue))
     {
+        this->reliable = new AMQP::Reliable<>(*channel);
+
         // initialize the libev structure
         //ev_timer_init(&_timer, callback, 0.005, 1.005);
         ev_timer_init(&_timer, callback, 1.5, 0.);
@@ -173,6 +199,8 @@ public:
  */
 int main()
 {
+    auto master_start_time = std::chrono::high_resolution_clock::now();
+
     // access to the event loop
     auto *loop = EV_DEFAULT;
     
@@ -220,6 +248,11 @@ int main()
     
     // run the loop
     ev_run(loop, 0);
+
+    auto master_end_time = std::chrono::high_resolution_clock::now();
+    std::cout << "The end to end runtime of this app took: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(master_end_time - master_start_time).count() 
+        << " ms" << std::endl;
 
     // done
     return 0;
