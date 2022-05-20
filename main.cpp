@@ -15,6 +15,8 @@
 #include <amqpcpp/libev.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
+#include <chrono>
+
 
 /**
  *  Custom handler
@@ -120,7 +122,18 @@ private:
         MyTimer *self = static_cast<MyTimer*>(timer->data);
 
         // publish a message
-        self->_channel->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        int MESSAGE_COUNT = 100;
+        for (int i = 0; i < MESSAGE_COUNT; ++i) {
+            self->_channel->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"  + std::to_string(i));
+            std::cout << "Sent publish signal for message " << i << std::endl;
+        }
+
+        auto end_time =  std::chrono::high_resolution_clock::now();
+        std::cout << "presumably published " << MESSAGE_COUNT << " in " 
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() 
+            << " ms" << std::endl;
     }
 
 public:
@@ -174,7 +187,7 @@ int main()
 #endif
 
     // make a connection
-    AMQP::Address address("amqp://guest:guest@localhost/");
+    AMQP::Address address("amqp://devuser:awioj230923wdkxke9iqw@164.92.155.253:30123/");
 //    AMQP::Address address("amqps://guest:guest@localhost/");
     AMQP::TcpConnection connection(&handler, address);
     
