@@ -1,0 +1,1 @@
+g++ -o test.out main.cpp -std=c++11 -lamqpcpp -lpthread -ldl -lev -lssl
