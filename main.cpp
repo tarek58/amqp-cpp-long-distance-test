@@ -132,7 +132,7 @@ private:
         for (int i = 0; i < MESSAGE_COUNT; ++i) {
             // self->_channel->publish
             self->reliable->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"  + std::to_string(i))
-                .onAck([i, MESSAGE_COUNT, start_time, loop]() {
+                .onAck([i, start_time, loop]() {
                     std::cout << "Got ack on " << i << std::endl;
 
                     if (i == MESSAGE_COUNT - 1) {
@@ -155,7 +155,7 @@ private:
         }
 
         auto end_time =  std::chrono::high_resolution_clock::now();
-        std::cout << "presumably sent publish signal for " << MESSAGE_COUNT << " in " 
+        std::cout << "Publish operation accepted by lib for " << MESSAGE_COUNT << " in " 
             << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() 
             << " ms" << std::endl;
     }
