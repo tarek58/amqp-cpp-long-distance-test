@@ -4,7 +4,7 @@ Tests (and times) ability to use the C++ lib `amqpcpp` to publish data to a far-
 
 ## Objective
 
-Show how good the async/event-based approach that this library uses.  As a prerequisite you should set up a "far away" rabbit server e.g one that has a high ping time from wherever you're running the test.  
+Show how good the async/event-based approach that this library uses.  As a prerequisite you should set up a "far away" rabbit server e.g one that has a high ping time from wherever you're running the test.  Note that this is not a formal benchmark or "heavy duty" metrics app.  It is a sort of one-off batch of CPP code just to experiment with a concept.  The performance characteristics of this informal test were good enough to convince me to adopt AMQP-CPP in real world projects, where one of the factors was "how good will it work with non-local brokers?"  
 
 ## Building
 
