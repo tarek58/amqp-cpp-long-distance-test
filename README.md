@@ -86,3 +86,5 @@ In the simple run above the following things happened:
 This started using the demo shell from the [AMQP-CPP libev.cpp example](https://github.com/CopernicaMarketingSoftware/AMQP-CPP/blob/master/examples/libev.cpp) from the CopernicaMarketingSoftware AMQP-CPP lib.
 
 I modified this to added on the basic publish operations, the timer, etc that were needed for the purposes of this experiment.
+
+The generous contributors at Copernica who made the AMQP-CPP lib licensed it under Apache 2.0 so this repo uses the same license.
