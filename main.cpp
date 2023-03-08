@@ -18,6 +18,7 @@
 #include <openssl/opensslv.h>
 #include <chrono>
 
+int MESSAGE_COUNT;
 
 /**
  *  Custom handler
@@ -127,8 +128,7 @@ private:
 
         // publish a message
         auto start_time = std::chrono::high_resolution_clock::now();
-
-        int MESSAGE_COUNT = 1000;
+        
         for (int i = 0; i < MESSAGE_COUNT; ++i) {
             // self->_channel->publish
             self->reliable->publish("loadtest", self->_queue, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"  + std::to_string(i))
@@ -197,8 +197,26 @@ public:
  *  Main program
  *  @return int
  */
-int main()
+int main(int argc, char *argv[])
 {
+    MESSAGE_COUNT = 1000;
+    char* connString = argv[0];
+    std::vector<std::string> argList(argv + 1, argv + argc);
+
+    if (argList.size() < 1)
+    {
+        std::cerr << "Usage: ./test.out [rabbitMQConnectionString]" << std::endl;
+        std::cerr << "Usage 2: ./test.out [rabbitMQConnectionString] [iterations]" << std::endl;
+        exit(1);
+    }
+
+    std::string connectionString = argList[0];
+    if (argList.size() > 1)
+        MESSAGE_COUNT = stoi(argList[1]);
+
+    std::cout << "Will connect to " << connectionString 
+        << " and publish " << MESSAGE_COUNT << " messages " << std::endl;
+
     auto master_start_time = std::chrono::high_resolution_clock::now();
 
     // access to the event loop
@@ -215,7 +233,7 @@ int main()
 #endif
 
     // make a connection
-    AMQP::Address address("amqp://devuser:awioj230923wdkxke9iqw@164.92.155.253:30123/");
+    AMQP::Address address(connectionString);
 //    AMQP::Address address("amqps://guest:guest@localhost/");
     AMQP::TcpConnection connection(&handler, address);
     
